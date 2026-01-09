@@ -39,6 +39,12 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     else:
         tile_mask = tile_mask.to(device=bg_color.device, dtype=torch.uint8).contiguous()
 
+    gaussian_mask = getattr(pc, "_active_mask", None)
+    if gaussian_mask is None:
+        gaussian_mask = torch.empty((0,), device=bg_color.device, dtype=torch.uint8)
+    else:
+        gaussian_mask = gaussian_mask.to(device=bg_color.device, dtype=torch.uint8).contiguous()
+
     raster_settings = GaussianRasterizationSettings(
         image_height=int(viewpoint_camera.image_height),
         image_width=int(viewpoint_camera.image_width),
@@ -54,6 +60,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
         debug=pipe.debug,
         antialiasing=pipe.antialiasing,
         tile_mask=tile_mask,
+        gaussian_mask=gaussian_mask,
     )
 
     rasterizer = GaussianRasterizer(raster_settings=raster_settings)
