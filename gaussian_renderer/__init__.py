@@ -35,15 +35,27 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
 
     tile_mask = getattr(viewpoint_camera, "tile_mask", None)
     if tile_mask is None:
-        tile_mask = torch.empty((0,), device=bg_color.device, dtype=torch.uint8)
+        tile_mask = torch.empty((0,), device=bg_color.device, dtype=torch.int32)
     else:
-        tile_mask = tile_mask.to(device=bg_color.device, dtype=torch.uint8).contiguous()
+        tile_mask = tile_mask.to(device=bg_color.device, dtype=torch.int32).contiguous()
+
+    tile_mask_mode = getattr(viewpoint_camera, "tile_mask_mode", -1)
+    tile_mask_pad = getattr(viewpoint_camera, "tile_mask_pad", 0)
+    tile_mask_build = bool(getattr(viewpoint_camera, "tile_mask_build", False))
 
     gaussian_mask = getattr(pc, "_active_mask", None)
     if gaussian_mask is None:
         gaussian_mask = torch.empty((0,), device=bg_color.device, dtype=torch.uint8)
     else:
         gaussian_mask = gaussian_mask.to(device=bg_color.device, dtype=torch.uint8).contiguous()
+
+    gaussian_mask_forward = gaussian_mask
+    if not bool(getattr(viewpoint_camera, "gaussian_mask_forward", True)):
+        gaussian_mask_forward = torch.empty((0,), device=bg_color.device, dtype=torch.uint8)
+
+    gaussian_mask_tile = gaussian_mask
+    if not bool(getattr(viewpoint_camera, "gaussian_mask_tile", True)):
+        gaussian_mask_tile = torch.empty((0,), device=bg_color.device, dtype=torch.uint8)
 
     raster_settings = GaussianRasterizationSettings(
         image_height=int(viewpoint_camera.image_height),
@@ -61,6 +73,11 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
         antialiasing=pipe.antialiasing,
         tile_mask=tile_mask,
         gaussian_mask=gaussian_mask,
+        gaussian_mask_forward=gaussian_mask_forward,
+        gaussian_mask_tile=gaussian_mask_tile,
+        tile_mask_mode=tile_mask_mode,
+        tile_mask_pad=tile_mask_pad,
+        tile_mask_build=tile_mask_build,
     )
 
     rasterizer = GaussianRasterizer(raster_settings=raster_settings)
