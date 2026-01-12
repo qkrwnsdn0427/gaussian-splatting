@@ -3,13 +3,14 @@
 # GRAPHDECO research group, https://team.inria.fr/graphdeco
 # All rights reserved.
 #
-# This software is free for non-commercial, research and evaluation use 
+# This software is free for non-commercial, research and evaluation use
 # under the terms of the LICENSE.md file.
 #
 # For inquiries contact  george.drettakis@inria.fr
 #
 
-from scene.cameras import Camera
+from __future__ import annotations
+
 import numpy as np
 from utils.graphics_utils import fov2focal
 from PIL import Image
@@ -18,6 +19,8 @@ import cv2
 WARNED = False
 
 def loadCam(args, id, cam_info, resolution_scale, is_nerf_synthetic, is_test_dataset):
+    from scene.cameras import Camera
+
     image = Image.open(cam_info.image_path)
 
     if cam_info.depth_path != "":
@@ -74,7 +77,7 @@ def cameraList_from_camInfos(cam_infos, resolution_scale, args, is_nerf_syntheti
 
     return camera_list
 
-def camera_to_JSON(id, camera : Camera):
+def camera_to_JSON(id, camera: "Camera"):
     Rt = np.zeros((4, 4))
     Rt[:3, :3] = camera.R.transpose()
     Rt[:3, 3] = camera.T

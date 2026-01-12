@@ -42,6 +42,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     tile_mask_mode = getattr(viewpoint_camera, "tile_mask_mode", -1)
     tile_mask_pad = getattr(viewpoint_camera, "tile_mask_pad", 0)
     tile_mask_build = bool(getattr(viewpoint_camera, "tile_mask_build", False))
+    tile_mask_cull = bool(getattr(viewpoint_camera, "tile_mask_cull", False))
 
     gaussian_mask = getattr(pc, "_active_mask", None)
     if gaussian_mask is None:
@@ -50,7 +51,10 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
         gaussian_mask = gaussian_mask.to(device=bg_color.device, dtype=torch.uint8).contiguous()
 
     gaussian_mask_forward = gaussian_mask
-    if not bool(getattr(viewpoint_camera, "gaussian_mask_forward", True)):
+    forward_mask_attr = getattr(viewpoint_camera, "gaussian_mask_forward", True)
+    if isinstance(forward_mask_attr, torch.Tensor):
+        gaussian_mask_forward = forward_mask_attr.to(device=bg_color.device, dtype=torch.uint8).contiguous()
+    elif not bool(forward_mask_attr):
         gaussian_mask_forward = torch.empty((0,), device=bg_color.device, dtype=torch.uint8)
 
     gaussian_mask_tile = gaussian_mask
@@ -78,6 +82,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
         tile_mask_mode=tile_mask_mode,
         tile_mask_pad=tile_mask_pad,
         tile_mask_build=tile_mask_build,
+        tile_mask_cull=tile_mask_cull,
     )
 
     rasterizer = GaussianRasterizer(raster_settings=raster_settings)
